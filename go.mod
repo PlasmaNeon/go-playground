@@ -1,3 +1,3 @@
-module go-playground
+module example
 
 go 1.16
