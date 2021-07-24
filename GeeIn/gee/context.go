@@ -13,12 +13,18 @@ type Context struct {
 	//origin objects
 	Writer http.ResponseWriter
 	Req    *http.Request
+
 	// request info
 	Path   string
 	Method string
 	Params map[string]string
+
 	// response info
 	StatusCode int
+
+	// middleware
+	handlers []HandlerFunc
+	index    int // 记录当前执行到第几个中间件
 }
 
 func newContext(w http.ResponseWriter, req *http.Request) *Context {
@@ -27,9 +33,18 @@ func newContext(w http.ResponseWriter, req *http.Request) *Context {
 		Req:    req,
 		Path:   req.URL.Path,
 		Method: req.Method,
+		index:  -1,
 	}
 }
 
+// Next 控制权交予下一个中间件
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
+	}
+}
 func (c *Context) PostForm(key string) string {
 	return c.Req.FormValue(key)
 }
@@ -58,6 +73,16 @@ func (c *Context) String(code int, format string, values ...interface{}) {
 	c.Writer.Write([]byte(fmt.Sprintf(format, values...)))
 }
 
+func (c *Context) Fail(code int, err string) {
+	c.index = len(c.handlers)
+	c.JSON(code, H{"message": err})
+}
+
+func (c *Context) Data(code int, data []byte) {
+	c.Status(code)
+	c.Writer.Write(data)
+}
+
 // JSON response
 func (c *Context) JSON(code int, obj interface{}) {
 	c.SetHeader("Content-Type", "application/json")
@@ -68,11 +93,7 @@ func (c *Context) JSON(code int, obj interface{}) {
 	}
 }
 
-func (c *Context) Data(code int, data []byte) {
-	c.Status(code)
-	c.Writer.Write(data)
-}
-
+//HTML response
 func (c *Context) HTML(code int, html string) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
