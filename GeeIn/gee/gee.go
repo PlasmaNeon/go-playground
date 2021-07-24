@@ -1,33 +1,63 @@
 package gee
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
-type HandleFunc func(http.ResponseWriter, *http.Request)
+type HandlerFunc func(*Context)
 
+// RouterGroup is for Route Group Control
+type RouterGroup struct {
+	prefix      string
+	middlewares []HandlerFunc
+	parent      *RouterGroup
+	engine      *Engine //每个RouterGroup 中都有自己的engine
+}
+
+// Engine has all methods that RouterGroup has
+// Engine 本身也是一个顶层的Group，所以嵌套 *RouterGroup
 type Engine struct {
-	router map[string]HandleFunc
+	*RouterGroup
+	router *router
+	groups []*RouterGroup
 }
 
+// New is the constructor of gee.Engine
 func New() *Engine {
-	return &Engine{
-		router: make(map[string]HandleFunc),
+	engine := &Engine{
+		router: newRouter(),
 	}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
+	return engine
 }
 
-func (e *Engine) addRoute(method string, pattern string, handler HandleFunc) {
-	key := method + "-" + pattern
-	e.router[key] = handler
+// Group is defined to create a new RouterGroup
+// remember all groups share the same Engine instance
+func (group *RouterGroup) Group(prefix string) *RouterGroup {
+	engine := group.engine
+	newGroup := &RouterGroup{
+		prefix: group.prefix + prefix,
+		parent: group,
+		engine: engine, // 共用相同的engine
+	}
+	engine.groups = append(engine.groups, newGroup)
+	return newGroup
 }
 
-func (e *Engine) GET(pattern string, handler HandleFunc) {
-	e.addRoute("GET", pattern, handler)
+func (group *RouterGroup) addRoute(method string, comp string, handler HandlerFunc) {
+	pattern := group.prefix + comp
+	log.Printf("Route %4s - %s", method, pattern)
+	group.engine.router.addRoute(method, pattern, handler)
 }
 
-func (e *Engine) POST(pattern string, handler HandleFunc) {
-	e.addRoute("POST", pattern, handler)
+func (group *RouterGroup) GET(pattern string, handler HandlerFunc) {
+	group.addRoute("GET", pattern, handler)
+}
+
+func (group *RouterGroup) POST(pattern string, handler HandlerFunc) {
+	group.addRoute("POST", pattern, handler)
 }
 
 func (e *Engine) Run(addr string) (err error) {
@@ -35,10 +65,6 @@ func (e *Engine) Run(addr string) (err error) {
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	key := req.Method + "-" + req.URL.Path
-	if handler, ok := e.router[key]; ok {
-		handler(w, req)
-	} else {
-		fmt.Fprintf(w, "404 NOT Found: %s\n", req.URL)
-	}
+	c := newContext(w, req)
+	e.router.handle(c)
 }
