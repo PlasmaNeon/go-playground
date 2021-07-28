@@ -15,11 +15,11 @@ type Field struct {
 
 // Schema
 type Schema struct {
-	Model     interface{}       //被映射的对象
-	Name      string            //表名
-	Fields    []*Field          //字段
-	FiedNames []string          // 包含所有的字段（列）名
-	fieldMap  map[string]*Field //字段名与Field的映射关系，方便以后直接使用
+	Model      interface{}       //被映射的对象
+	Name       string            //表名
+	Fields     []*Field          //字段
+	FieldNames []string          // 包含所有的字段（列）名
+	fieldMap   map[string]*Field //字段名与Field的映射关系，方便以后直接使用
 }
 
 func (s *Schema) GetField(name string) *Field {
@@ -45,9 +45,20 @@ func Parse(dest interface{}, d dialect.Dialect) *Schema {
 				field.Tag = v
 			}
 			schema.Fields = append(schema.Fields, field)
-			schema.FiedNames = append(schema.FiedNames, p.Name)
+			schema.FieldNames = append(schema.FieldNames, p.Name)
 			schema.fieldMap[p.Name] = field
 		}
 	}
 	return schema
+}
+
+// RecordValues Change struct to []interface{}
+// eg: &User{Name: "Tom", Age: 18} -> ("Tom", 18)
+func (s *Schema) RecordValues(dest interface{}) []interface{} {
+	destValue := reflect.Indirect(reflect.ValueOf(dest))
+	var fieldValues []interface{}
+	for _, field := range s.Fields {
+		fieldValues = append(fieldValues, destValue.FieldByName(field.Name).Interface())
+	}
+	return fieldValues
 }
