@@ -27,15 +27,19 @@ func genBindVars(num int) string {
 	return strings.Join(vars, ", ")
 }
 
+/* 各个子句的生成规则 */
+
+// _insert: INSERT INTO $tableName ($fields)
 func _insert(values ...interface{}) (string, []interface{}) {
-	// INSERT INTO $tableName ($fields)
+
 	tableName := values[0]
 	fields := strings.Join(values[1].([]string), ",")
 	return fmt.Sprintf("INSERT INTO %s (%v)", tableName, fields), []interface{}{}
 }
 
+//_values: VALUES ($v1), ($v2)
 func _values(values ...interface{}) (string, []interface{}) {
-	//VALUES ($v1), ($v2)
+
 	var bindStr string
 	var sql strings.Builder
 	var vars []interface{}
@@ -54,6 +58,26 @@ func _values(values ...interface{}) (string, []interface{}) {
 	return sql.String(), vars
 }
 
+// _select: SELECT $fields from $tableName
 func _select(values ...interface{}) (string, []interface{}) {
-	// SELECT
+
+	tableName := values[0]
+	fields := strings.Join(values[1].([]string), ",")
+	return fmt.Sprintf("SELECT %v FROM %s", fields, tableName), []interface{}{}
+}
+
+// _limit: LIMIT $num
+func _limit(values ...interface{}) (string, []interface{}) {
+	return "LIMIT ?", values
+}
+
+// _where: WHERE $desc
+func _where(values ...interface{}) (string, []interface{}) {
+	desc, vars := values[0], values[1:]
+	return fmt.Sprintf("WHERE %s", desc), vars
+}
+
+// _orderby
+func _orderby(values ...interface{}) (string, []interface{}) {
+	return fmt.Sprintf("ORDER BY %s", values[0]), []interface{}{}
 }
