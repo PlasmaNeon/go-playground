@@ -15,11 +15,11 @@ type Field struct {
 
 // Schema
 type Schema struct {
-	Model      interface{}       //被映射的对象
-	Name       string            //表名
-	Fields     []*Field          //字段
+	Model      interface{}       // 被映射的对象
+	Name       string            // 表名
+	Fields     []*Field          // 字段（列）
 	FieldNames []string          // 包含所有的字段（列）名
-	fieldMap   map[string]*Field //字段名与Field的映射关系，方便以后直接使用
+	fieldMap   map[string]*Field // 字段（列）名与Field的映射关系，方便以后直接使用
 }
 
 func (s *Schema) GetField(name string) *Field {

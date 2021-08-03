@@ -17,7 +17,7 @@ type Session struct {
 	sqlVars []interface{}
 
 	dialect  dialect.Dialect
-	refTable *schema.Schema
+	refTable *schema.Schema // 表映射的信息
 
 	clause clause.Clause
 }
