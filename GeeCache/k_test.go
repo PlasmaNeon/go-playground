@@ -1,4 +1,4 @@
-package geecache
+package main
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 var m sync.Mutex
-var set = make(map[int]bool, 0)
+var set = make(map[int]bool)
 
 func printOnce(num int) {
 	m.Lock()
