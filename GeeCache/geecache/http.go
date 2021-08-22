@@ -2,7 +2,7 @@ package geecache
 
 import (
 	"fmt"
-	consistentHash "geecache/consistent_hash"
+	"geecache/consistenthash"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -23,7 +23,7 @@ type HTTPPool struct {
 	basePath string
 
 	mu          sync.Mutex             // guards peers and httpGetters
-	peers       *consistentHash.Map    //根据具体的key 选择节点
+	peers       *consistenthash.Map    //根据具体的key 选择节点
 	httpGetters map[string]*httpGetter // 映射远程节点与对应的httpGetter
 }
 
@@ -71,7 +71,7 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (p *HTTPPool) Set(peers ...string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.peers = consistentHash.NewMap(defaultReplicas, nil)
+	p.peers = consistenthash.NewMap(defaultReplicas, nil)
 	p.peers.Add(peers...)
 	p.httpGetters = make(map[string]*httpGetter, len(peers))
 	for _, peer := range peers {
