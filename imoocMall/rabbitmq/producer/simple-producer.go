@@ -6,11 +6,13 @@ import (
 )
 
 func main() {
-	mq := rabbitmq.NewRabbitMQSimple("imoocSimple")
+	mq := rabbitmq.NewRabbitMQSubscribe("" + "newSubscribe")
 	//mq.PublishSimple("Hello world!")
 	for i := 0; i < 20; i++ {
-		mq.PublishSimple(fmt.Sprintf("%d", i))
+		mq.PublishSubscribe(fmt.Sprintf("%d", i))
+		fmt.Println(i)
 	}
 
 	fmt.Println("sent")
+
 }

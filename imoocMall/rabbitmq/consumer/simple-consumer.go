@@ -3,6 +3,6 @@ package main
 import "example/rabbitmq"
 
 func main() {
-	mq := rabbitmq.NewRabbitMQSimple("imoocSimple")
-	mq.ConsumeSimple()
+	mq := rabbitmq.NewRabbitMQSubscribe("" + "newSubscribe")
+	mq.ConsumeSubscribe()
 }

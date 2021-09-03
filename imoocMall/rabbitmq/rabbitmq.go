@@ -139,7 +139,7 @@ func NewRabbitMQSubscribe(exchange string) *RabbitMQ {
 	return NewRabbitMQ("", exchange, "")
 }
 
-func (r *RabbitMQ) PublishSubscribe(message string) *RabbitMQ {
+func (r *RabbitMQ) PublishSubscribe(message string) {
 	err := r.channel.ExchangeDeclare(
 		r.Exchange,
 		"fanout", // exchange 类型
@@ -158,12 +158,59 @@ func (r *RabbitMQ) PublishSubscribe(message string) *RabbitMQ {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: []byte(message)
+			Body:        []byte(message),
 		},
 	)
 	r.failOnErr(err, "failed to send messages")
 }
 
 func (r *RabbitMQ) ConsumeSubscribe() {
+	// create exchange
+	err := r.channel.ExchangeDeclare(
+		r.Exchange,
+		"fanout", // exchange 类型
+		true,
+		false,
+		false, // internal 表示这个exchange不可以被client用来推送消息，仅用来进行exchange之间的绑定
+		false,
+		nil,
+	)
+	r.failOnErr(err, "failed to declare an exchange")
 
+	// create queue
+	q, err := r.channel.QueueDeclare(
+		"", // random queue name
+		false,
+		false,
+		true,
+		false,
+		nil,
+	)
+	r.failOnErr(err, "Failed to declare a queue")
+
+	// bind queue and exchange
+	err = r.channel.QueueBind(
+		q.Name,
+		"", // in subscribe method, key is ""
+		r.Exchange,
+		false,
+		nil,
+	)
+	messages, err := r.channel.Consume(
+		q.Name,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	forever := make(chan bool)
+	go func() {
+		for d := range messages {
+			log.Printf("Received a message: %s", d.Body)
+		}
+	}()
+	<-forever
 }
