@@ -214,3 +214,6 @@ func (r *RabbitMQ) ConsumeSubscribe() {
 	}()
 	<-forever
 }
+
+/* Router Method */
+// producer set message queues based on rules
