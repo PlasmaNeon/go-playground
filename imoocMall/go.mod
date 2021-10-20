@@ -9,4 +9,5 @@ require (
 	github.com/nats-io/nats-server/v2 v2.6.2 // indirect
 	github.com/smartystreets/goconvey v1.6.6 // indirect
 	github.com/streadway/amqp v1.0.0
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 )
